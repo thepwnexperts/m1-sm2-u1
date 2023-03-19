@@ -10,54 +10,61 @@ const server = axios.create({
 const App = () => {
   const [email, setEmail] = useState("");
   const [otp, setOTP] = useState("");
-  const [message, setMessage] = useState("")
+  const [message, setMessage] = useState("");
   const [validEmail, setValidEmail] = useState(true);
   const [otpGenerated, setOtpGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    if (loading) return
-    setMessage('')
+    if (loading) return;
+    setMessage("");
     if (!validator.isEmail(email)) {
       return;
     }
-    setLoading(true)
-    if(!otpGenerated){
+    setLoading(true);
+    if (!otpGenerated) {
       try {
-        console.log('sending otp...')
         const res = await server.post("/otp", { to: email });
         if (res.status != 200) {
           console.log("Some problem occured while sending OTP: \n", res);
-          setMessage("Some problem occured while sending OTP\n" + res?.data?.message)
+          setMessage(
+            "Some problem occured while sending OTP\n" + res?.data?.message
+          );
         }
-        if(res.status == 200) {setOtpGenerated(true)}
-        setLoading(false)
+        if (res.status == 200) {
+          setOtpGenerated(true);
+        }
       } catch (error) {
         console.log(error);
-        setMessage(error?.message)
+        setMessage("Some problem occured while sending OTP\n" + error?.message);
       }
+      setLoading(false);
       return;
     }
 
-    try{
-      console.log('verifying otp...')
-      const res = await server.post("/otp/verify", {from: email, otp: otp})
-      if(res.status != 200){
+    try {
+      const res = await server.post("/otp/verify", { from: email, otp: otp });
+      if (res.status != 200) {
         console.log("Some problem occured while verifying OTP: \n", res);
-        setMessage("Some problem occured while verifying OTP\n" + res?.data?.message)
+        setMessage(
+          "Some problem occured while verifying OTP\n" + res?.data?.message
+        );
       }
-      if(res.status == 200) {
-        console.log(res)
-        setMessage("OTP Verified Successfully")
-        setOtpGenerated(false)
+      if (res.status == 200) {
+        setMessage("OTP Verified Successfully");
+        setOtpGenerated(false);
       }
-      setOTP("")
-      setLoading(false)
-    }
-    catch(error){
+      setOTP("");
+    } catch (error) {
       console.log(error);
-      setMessage(error?.message)
+      if (error?.response?.status == 406) setMessage("Invalid OTP");
+      else
+        setMessage(
+          "Some problem occured while verifying OTP\n" + error?.message
+        );
     }
+    setOTP("");
+    setLoading(false);
   };
 
   return (
@@ -99,7 +106,7 @@ const App = () => {
             </>
           )}
         </div>
-        <button type="submit" >{loading ? "Loading...": "Submit"}</button>
+        <button type="submit">{loading ? "Loading..." : "Submit"}</button>
       </form>
       {message && <p className="message">{message}</p>}
     </div>
