@@ -10,22 +10,52 @@ const server = axios.create({
 const App = () => {
   const [email, setEmail] = useState("");
   const [otp, setOTP] = useState("");
+  const [message, setMessage] = useState("")
   const [validEmail, setValidEmail] = useState(true);
   const [otpGenerated, setOtpGenerated] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const submit = async () => {
+    if (loading) return
+    setMessage('')
     if (!validator.isEmail(email)) {
       return;
     }
-
-    try {
-      const res = await server.post("/otp", { to: email });
-      if (res.status != 200) {
-        console.log("Some problem occured while sending OTP: \n", res);
+    setLoading(true)
+    if(!otpGenerated){
+      try {
+        console.log('sending otp...')
+        const res = await server.post("/otp", { to: email });
+        if (res.status != 200) {
+          console.log("Some problem occured while sending OTP: \n", res);
+          setMessage("Some problem occured while sending OTP\n" + res?.data?.message)
+        }
+        if(res.status == 200) {setOtpGenerated(true)}
+        setLoading(false)
+      } catch (error) {
+        console.log(error);
+        setMessage(error?.message)
       }
-      setOtpGenerated(true);
-    } catch (error) {
+      return;
+    }
+
+    try{
+      console.log('verifying otp...')
+      const res = await server.post("/otp/verify", {from: email, otp: otp})
+      if(res.status != 200){
+        console.log("Some problem occured while verifying OTP: \n", res);
+        setMessage("Some problem occured while verifying OTP\n" + res?.data?.message)
+      }
+      if(res.status == 200) {
+        console.log(res)
+        setMessage("OTP Verified Successfully")
+        setOtpGenerated(false)
+      }
+      setLoading(false)
+    }
+    catch(error){
       console.log(error);
+      setMessage(error?.message)
     }
   };
 
@@ -38,30 +68,39 @@ const App = () => {
           submit();
         }}
       >
-        <input
-          className={!validEmail ? "wrongInput" : ""}
-          type="email"
-          placeholder="Enter Email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            validator.isEmail(email)
-              ? setValidEmail(true)
-              : setValidEmail(false);
-          }}
-          required
-        />
-        {otpGenerated && (
+        <div className="inputBox">
+          <p>Enter Email:</p>
           <input
-            type="password"
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => setOTP(e.target.value)}
+            className={!validEmail ? "wrongInput" : ""}
+            type="email"
+            placeholder="Enter Email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              validator.isEmail(email)
+                ? setValidEmail(true)
+                : setValidEmail(false);
+            }}
             required
           />
-        )}
-        <button type="submit">Submit</button>
+        </div>
+        <div className="inputBox">
+          {otpGenerated && (
+            <>
+              <p>Enter OTP:</p>
+              <input
+                type="password"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOTP(e.target.value)}
+                required
+              />
+            </>
+          )}
+        </div>
+        <button type="submit" >{loading ? "Loading...": "Submit"}</button>
       </form>
+      {message && <p className="message">{message}</p>}
     </div>
   );
 };
