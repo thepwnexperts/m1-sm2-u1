@@ -51,6 +51,7 @@ const App = () => {
         setMessage("OTP Verified Successfully")
         setOtpGenerated(false)
       }
+      setOTP("")
       setLoading(false)
     }
     catch(error){
