@@ -1,3 +1,3 @@
-## M2-SM2-U2
+## M1-SM2-U1
 
 OTP verification ReactJS app with OTP verification on server side (secure)
